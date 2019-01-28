@@ -24,9 +24,9 @@ cap = cv2.VideoCapture("test2.mp4")
 time.sleep(2.0)
 id = 0
 while True:
-    ret, imageframe = cap.read()
-    (h, w, l) = imageframe.shape
-    frame = imageframe.copy()
+    ret, frame = cap.read()
+    (h, w, l) = frame.shape
+    id = id+1
     if frame.any():
         pass
     else:
@@ -37,7 +37,6 @@ while True:
     # detections and predictions
     net.setInput(blob)
     detections = net.forward()
-    id = id+1
 
     # current time
     c = int(time.time())
@@ -57,11 +56,13 @@ while True:
                       (0, 0, 255), 2)
         cv2.putText(frame, text, (startX+5, endY-5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+        cv2.imwrite("detected/Dnn/img"+str(id)+".jpg",frame[startY:endY, startX:endX])
 
     # show the output frame
     cv2.imshow("Frame", frame)
     key = cv2.waitKey(1)
     if key == ord("q"):
+        id=0
         break
 
 cv2.destroyAllWindows()
