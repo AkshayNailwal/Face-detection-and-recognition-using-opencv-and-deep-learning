@@ -1,11 +1,12 @@
 #  -----------------------------USAGE------------------------------
-# python detect_faces_video.py --prototxt deploy.prototxt.txt --model res10_300x300_ssd_iter_140000.caffemodel
+# python detect_faces_video.py --prototxt models/deploy.prototxt.txt --model models/res10_300x300_ssd_iter_140000.caffemodel
 
 import numpy as np
 import argparse
 import time
 import cv2
-import _thread
+from imutils.video import WebcamVideoStream
+import imutils
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--prototxt", required=True,
@@ -20,11 +21,13 @@ print("[INFO] loading model...")
 net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
 print("[INFO] starting video stream...")
-cap = cv2.VideoCapture("test2.mp4")
+vs = WebcamVideoStream(src="rtsp://root:essi@192.168.1.90/axis-media/media.amp").start()
 time.sleep(2.0)
+print("[INFO] ------started survillancing------")
 id = 0
 while True:
-    ret, frame = cap.read()
+    img = vs.read()
+    frame = img.copy()
     (h, w, l) = frame.shape
     id = id+1
     if frame.any():
@@ -46,7 +49,6 @@ while True:
         confidence = detections[0, 0, i, 2]
         if confidence < args["confidence"]:
             continue
-
         box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
         (startX, startY, endX, endY) = box.astype("int")
 
@@ -56,7 +58,11 @@ while True:
                       (0, 0, 255), 2)
         cv2.putText(frame, text, (startX+5, endY-5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
-        cv2.imwrite("detected/Dnn/img"+str(id)+".jpg",frame[startY:endY, startX:endX])
+        try:
+            if frame[startY:endY, startX:endX].size:
+                cv2.imwrite("detected/Dnn/img"+str(id)+".jpg", cv2.resize(img[startY:endY, startX:endX], (100, 100)))
+        except Exception as err:
+            print(err.args)
 
     # show the output frame
     cv2.imshow("Frame", frame)
@@ -66,3 +72,4 @@ while True:
         break
 
 cv2.destroyAllWindows()
+vs.stop()
