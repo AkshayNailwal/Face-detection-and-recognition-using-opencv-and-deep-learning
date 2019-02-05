@@ -1,0 +1,6 @@
+# Things to be excluded
+
+*.jpg
+*.yml
+/models/*
+/__pycache__/*
