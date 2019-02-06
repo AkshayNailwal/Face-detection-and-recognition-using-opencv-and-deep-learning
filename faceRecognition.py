@@ -20,6 +20,8 @@ def predict():
                 roi_gray = gray[y: y+h, x: x+w]
                 label, conf = face_recognizer.predict(roi_gray)
                 print(label, int(conf))
+                if conf>85:
+                    label="Unknown"
                 cv2.putText(img, str(label), (x+5, y+h-5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
             cv2.imshow("frames", img)
             if cv2.waitKey(1) == ord("q"):

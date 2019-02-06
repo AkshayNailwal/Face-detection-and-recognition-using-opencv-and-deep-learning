@@ -1,4 +1,4 @@
-import os
+import os, sys, re
 import cv2
 import numpy as np
 import time
@@ -20,6 +20,16 @@ def face_Detector (image):
     return face_array
 
 def training_Data(path):
+    while True:
+        try:
+            details = {"name" : input("Provide a name for the Employee:- "), "depart" : input("Department:- "), "ID" : int(input("Office Id (number) :- "))}
+            if bool(re.search(r'\d', details["name"])) or bool(re.search(r'\d', details["depart"])):
+                raise ValueError("[Error] Invalid Input for Name or Department")
+            break
+        except Exception as err:
+            print("[Error] Invalid Input for Office Id")
+            continue
+     
     sampled_faces=[]
     sampled_labels=[]
     img_name=None
@@ -42,9 +52,10 @@ def training_Data(path):
         while(True):
             frame = vs.read()
             cv2.imshow("frame",frame)
-            if cv2.waitKey(10) == ord("q"):
-                break
             faces = face_Detector(frame)
+            if cv2.waitKey(1) == ord("q"):
+                # sys.exit()
+                break
             if faces is None or faces==[]:
                 continue
             for face in faces:
@@ -54,20 +65,17 @@ def training_Data(path):
                 cv2.imwrite(img_name, face)
                 sampled_labels.append(label)
                 sampled_faces.append(face)
+
             if img_id>=50:
                 break
-
     vs.stop()
     cv2.destroyAllWindows()
-    return (sampled_faces, sampled_labels)
+    return (sampled_faces, sampled_labels, details)
 
 def confirm_save(recognizer, faces, labels, imageFolder):
     print("[Info] Saving Data.......")
     if os.path.exists("trainer/training_data.yml")==False:
-        print("lll")
         recognizer.train(faces, np.array(labels))
-        recognizer.save("trainer/training_data.yml")
-        print("[Info] Data Saved")
     else:
         new_faces=[]
         new_labels=[]
@@ -78,20 +86,30 @@ def confirm_save(recognizer, faces, labels, imageFolder):
             for face in list_faces:
                 new_faces.append(cv2.imread(list_face_path+"/"+face, 0))
                 new_labels.append(usr_data[1:])
-        print(len(new_faces),len(new_labels))
-        print(np.concatenate(new_faces, axis = 0))
         recognizer.update(np.stack(new_faces, axis = 0), np.array(new_labels, dtype=np.int32))
-        print(np.concatenate(new_faces, axis = 0).size)
-        recognizer.save("trainer/training_data.yml")
-        print("[Info] Data Saved")
+    recognizer.save("trainer/training_data.yml")
+    print("[Info] Data Saved")
 
 def train(path, recognizer=None):
     face_recognizer = recognizer or cv2.face.LBPHFaceRecognizer_create()
-    faces, labels = training_Data(path)
+    faces, labels, details = training_Data(path)
     print(len(faces), len(labels))
     if faces and labels:
         print(labels)
-    confirm_save(face_recognizer, faces, labels, path)
+    while True:
+        print("[Info] Waiting to save.....")
+        confirm_save = input("Enter  y  for 'Yes'   n for 'No' :- ")
+        if confirm_save == "y":
+            confirm_save(face_recognizer, faces, labels, path)
+            break
+        elif confirm_save == "n":
+            print("[Info] Denied Input Data")
+            break
+        else:
+            print("[Warning] Provide appropriate input")
+            continue
+            
+
 
 time.sleep(1)     
 train("dataset")

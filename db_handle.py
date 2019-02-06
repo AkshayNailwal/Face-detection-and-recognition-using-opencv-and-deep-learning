@@ -1,8 +1,7 @@
-import psycopg2
+import mysql.connector
+import config.DATABASE
 
-connection = psycopg2.connect(host="", db_name="", usr_name="", paswd="")
-curs = connection.cursor()
 
 def create_Database(curs):
-    query = "CREATE DATABASE Face_Recognition IF NOT EXISTS"
+    query = "CREATE DATABASE {} IF NOT EXISTS".format(db_name)
     curs.execute(query)
